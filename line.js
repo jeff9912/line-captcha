@@ -1,25 +1,126 @@
-// --- Captcha Setup ---
+// --- Captcha Modal Setup ---
+// Create backdrop overlay
+const backdrop = document.createElement('div');
+backdrop.style.position = 'fixed';
+backdrop.style.top = '0';
+backdrop.style.left = '0';
+backdrop.style.width = '100vw';
+backdrop.style.height = '100vh';
+backdrop.style.background = 'rgba(0,0,0,0.25)';
+backdrop.style.zIndex = '1000';
+document.body.appendChild(backdrop);
+
+// Create modal window
+const modal = document.createElement('div');
+modal.style.position = 'fixed';
+modal.style.top = '50%';
+modal.style.left = '50%';
+modal.style.transform = 'translate(-50%, -50%)';
+modal.style.background = 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)';
+modal.style.borderRadius = '18px';
+modal.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
+modal.style.padding = '32px 40px 32px 40px';
+modal.style.zIndex = '1001';
+modal.style.minWidth = '420px';
+modal.style.maxWidth = '90vw';
+modal.style.maxHeight = '90vh';
+modal.style.display = 'flex';
+modal.style.flexDirection = 'column';
+modal.style.alignItems = 'center';
+document.body.appendChild(modal);
+
+// Canvas inside modal
 const canvas = document.createElement('canvas');
-canvas.style.position = 'fixed';
-canvas.style.top = '0';
-canvas.style.left = '0';
-canvas.style.width = '100vw';
-canvas.style.height = '100vh';
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-document.body.appendChild(canvas);
+canvas.width = 600;
+canvas.height = 320;
+canvas.style.width = '600px';
+canvas.style.height = '320px';
+canvas.style.margin = '0 auto 0 auto';
+canvas.style.borderRadius = '12px';
+canvas.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)';
+canvas.style.opacity = '0.98';
+canvas.style.background = 'transparent';
+canvas.style.pointerEvents = 'auto';
+modal.appendChild(canvas);
 const ctx = canvas.getContext('2d');
 
-// Generate a random path (sine wave) scaled to canvas size
+// --- Professional Background ---
+document.body.style.margin = '0';
+document.body.style.height = '100vh';
+document.body.style.background = '#f8fafc';
+
+// Instructions
+const info = document.createElement('div');
+info.style.position = 'static';
+info.style.marginBottom = '0px';
+info.style.background = 'rgba(255,255,255,0.95)';
+info.style.padding = '18px 32px 18px 32px';
+info.style.borderRadius = '16px';
+info.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
+info.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+info.style.fontSize = '18px';
+info.style.color = '#222';
+info.style.textAlign = 'center';
+info.style.width = '100%';
+info.innerHTML = "<b style='font-size:22px;color:#0077ff;'>Line Captcha</b><br><span style='font-size:16px;'>Draw along the grey path as closely as possible!<br>At the end, you'll be told if you seem human or AI.</span>";
+modal.insertBefore(info, canvas);
+
+// --- Result Box ---
+const resultBox = document.createElement('div');
+resultBox.style.marginTop = '16px';
+resultBox.style.fontSize = '17px';
+resultBox.style.fontWeight = '500';
+resultBox.style.color = '#0077ff';
+resultBox.style.background = 'rgba(240,247,255,0.95)';
+resultBox.style.borderRadius = '10px';
+resultBox.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+resultBox.style.padding = '12px 20px';
+resultBox.style.display = 'none';
+resultBox.style.transition = 'opacity 0.2s';
+modal.appendChild(resultBox);
+
+// --- Reset Button ---
+const resetBtn = document.createElement('button');
+resetBtn.textContent = 'Reset Line';
+resetBtn.style.marginTop = '18px';
+resetBtn.style.display = 'inline-block';
+resetBtn.style.fontSize = '16px';
+resetBtn.style.padding = '8px 24px';
+resetBtn.style.cursor = 'pointer';
+resetBtn.style.borderRadius = '8px';
+resetBtn.style.border = 'none';
+resetBtn.style.background = 'linear-gradient(90deg,#0077ff 0%,#00c6ff 100%)';
+resetBtn.style.color = '#fff';
+resetBtn.style.fontWeight = 'bold';
+resetBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.07)';
+resetBtn.style.transition = 'background 0.2s';
+resetBtn.onmouseover = () => {
+    resetBtn.style.background = 'linear-gradient(90deg,#005bb5 0%,#0099cc 100%)';
+};
+resetBtn.onmouseout = () => {
+    resetBtn.style.background = 'linear-gradient(90deg,#0077ff 0%,#00c6ff 100%)';
+};
+modal.appendChild(resetBtn);
+
+resetBtn.addEventListener('click', () => {
+    pathPoints = generatePath();
+    userPoints = [];
+    drawPath();
+    resultBox.style.display = 'none';
+});
+
+// --- Path Generation ---
 function generatePath() {
     const points = [];
     const marginX = canvas.width * 0.1;
-    const marginY = canvas.height * 0.2;
+    const reservedBoxHeight = 120;
+    const marginY = canvas.height * 0.15;
     const usableWidth = canvas.width - 2 * marginX;
-    const usableHeight = canvas.height - 2 * marginY;
+    const topY = reservedBoxHeight;
+    const usableHeight = canvas.height - topY - marginY;
     const step = usableWidth / 50;
     for (let x = marginX; x <= canvas.width - marginX; x += step) {
-        const y = canvas.height / 2 + usableHeight / 2 * Math.sin((x / usableWidth) * 2 * Math.PI + Math.random() * 0.5);
+        const y = topY + usableHeight / 2 + usableHeight / 2 * Math.sin((x / usableWidth) * 2 * Math.PI + Math.random() * 0.5);
         points.push({ x, y });
     }
     return points;
@@ -27,7 +128,7 @@ function generatePath() {
 
 let pathPoints = generatePath();
 
-// Draw the path
+// --- Draw Path ---
 function drawPath() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#888';
@@ -74,6 +175,17 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
     if (!drawing) return;
     drawing = false;
+    // Check if user finished near the end of the path
+    const lastUser = userPoints[userPoints.length - 1];
+    const lastPath = pathPoints[pathPoints.length - 1];
+    const dx = lastUser.x - lastPath.x;
+    const dy = lastUser.y - lastPath.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 40) { // Require user to finish within 40px of end
+        resultBox.textContent = "Please complete the line all the way to the end!";
+        resultBox.style.display = 'block';
+        return;
+    }
     analyzeDrawing();
 });
 
@@ -112,39 +224,37 @@ function analyzeDrawing() {
 
     // 3. Decision
     let result = '';
+    let success = false;
     if (avgDist < 20 && jitter > 0.1) {
         result = 'You seem human!';
+        success = true;
     } else if (avgDist < 20 && jitter <= 0.1) {
         result = 'You seem like an AI (too smooth)!';
     } else {
         result = 'Failed: Please try to follow the path more closely.';
     }
 
-    // Show result
+    // Show result in resultBox
     setTimeout(() => {
-        alert(result);
+        resultBox.textContent = result;
+        resultBox.style.display = 'block';
         drawPath();
+        if (success) {
+            // Redirect to a random site
+            const sites = [
+                "https://www.wikipedia.org/",
+                "https://www.microsoft.com/",
+                "https://www.github.com/",
+                "https://www.google.com/",
+                "https://www.bbc.com/"
+            ];
+            const randomSite = sites[Math.floor(Math.random() * sites.length)];
+            setTimeout(() => {
+                window.location.href = randomSite;
+            }, 1200);
+        }
     }, 100);
 }
 
 // --- Initial Draw ---
 drawPath();
-
-// Redraw and regenerate path on resize
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    pathPoints = generatePath();
-    drawPath();
-});
-
-// Instructions
-const info = document.createElement('div');
-info.style.position = 'fixed';
-info.style.top = '10px';
-info.style.left = '10px';
-info.style.background = 'rgba(255,255,255,0.8)';
-info.style.padding = '10px';
-info.style.zIndex = 10;
-info.innerHTML = "<b>Draw along the grey path as closely as possible!</b><br>At the end, you'll be told if you seem human or AI.";
-document.body.insertBefore(info, canvas);

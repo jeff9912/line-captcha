@@ -54,7 +54,7 @@ const info = document.createElement('div');
 info.style.position = 'static';
 info.style.marginBottom = '0px';
 info.style.background = 'rgba(255,255,255,0.95)';
-info.style.padding = '18px 32px 18px 32px';
+info.style.padding = '18px 12px 18px 12px';
 info.style.borderRadius = '16px';
 info.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
 info.style.fontFamily = 'Segoe UI, Arial, sans-serif';
@@ -184,6 +184,12 @@ canvas.addEventListener('mouseup', () => {
     if (dist > 40) { // Require user to finish within 40px of end
         resultBox.textContent = "Please complete the line all the way to the end!";
         resultBox.style.display = 'block';
+        // Reset line on incomplete attempt
+        pathPoints = generatePath();
+        userPoints = [];
+        setTimeout(() => {
+            drawPath();
+        }, 100);
         return;
     }
     analyzeDrawing();
@@ -232,6 +238,12 @@ function analyzeDrawing() {
         result = 'You seem like an AI (too smooth)!';
     } else {
         result = 'Failed: Please try to follow the path more closely.';
+        // Reset line on failure
+        pathPoints = generatePath();
+        userPoints = [];
+        setTimeout(() => {
+            drawPath();
+        }, 100);
     }
 
     // Show result in resultBox
@@ -240,18 +252,13 @@ function analyzeDrawing() {
         resultBox.style.display = 'block';
         drawPath();
         if (success) {
-            // Redirect to a random site
-            const sites = [
-                "https://www.wikipedia.org/",
-                "https://www.microsoft.com/",
-                "https://www.github.com/",
-                "https://www.google.com/",
-                "https://www.bbc.com/"
-            ];
-            const randomSite = sites[Math.floor(Math.random() * sites.length)];
             setTimeout(() => {
-                window.location.href = randomSite;
-            }, 1200);
+                resultBox.textContent = "Captcha complete! Redirecting...";
+                resultBox.style.color = "#0077ff";
+                setTimeout(() => {
+                    window.location.href = "success.html";
+                }, 1200);
+            }, 1000);
         }
     }, 100);
 }

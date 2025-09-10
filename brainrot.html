@@ -5,12 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>youtube</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+body.cursed-bg {
+  animation: cursedbg 1.5s infinite linear;
+  filter: hue-rotate(90deg) contrast(1.2) saturate(1.5);
+}
+@keyframes cursedbg {
+  0% { background: #ff00cc; }
+  20% { background: #00ffcc; }
+  40% { background: #ccff00; }
+  60% { background: #ffcc00; }
+  80% { background: #00ccff; }
+  100% { background: #ff00cc; }
+}
+.cursed-overlay {
+  pointer-events: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999;
+  mix-blend-mode: difference;
+}
+.cursed-emoji {
+  position: absolute;
+  font-size: 48px;
+  opacity: 0.5;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.cursed-shake {
+  animation: shake 0.25s infinite alternate;
+}
+@keyframes shake {
+  0% { transform: rotate(-2deg) scale(1.01); }
+  100% { transform: rotate(2deg) scale(0.99); }
+}
+</style>
 </head>
 <body>
     <header>
         <div class="logo">
             <img src="https://www.youtube.com/s/desktop/7c155e84/img/favicon_144x144.png" alt="YouTube Logo">
-            <span>RedTube</span>
+            <span>Tralalero Tralala</span>
         </div>
         <div class="search">
             <input type="text" placeholder="Search">
@@ -142,7 +181,15 @@ const views = [
 ];
 const thumbnails = [
 
-    "img/tralalero.jpg"
+    "img/tralalero.jpg",
+    "img/bombardino.jpeg",
+    "img/prr.jpg",
+    "img/tung.jpg",    
+    "img/mrbeast-head-1400x825.jpg",
+    "img/mrbeast2.png",
+    "img/mrbeast3.png",
+    "img/mrbeast4.jpeg"
+
 ];
 
 function getRandom(arr) {
@@ -167,6 +214,30 @@ for (let i = 0; i < 8; i++) {
     </a>
     `;
 }
+document.body.classList.add('cursed-bg');
+// Add shake to main content
+setTimeout(() => {
+  document.querySelector('.container').classList.add('cursed-shake');
+}, 200);
+// Add cursed overlay with emojis
+const overlay = document.createElement('div');
+overlay.className = 'cursed-overlay';
+document.body.appendChild(overlay);
+const emojis = ['😱','🦑','👁️','🦷','🦀','🦠','🧠','👹','👺','🤡','💀','👻','🦇','🍄','🦞','🦐','🦑','🦕','🦖','🦚','🦜','🦢','🦩','🦨','🦡','🦦','🦥','🦧','🦣','🦤','🦦','🦭','🦮','🦯','🦰','🦱','🦲','🦳','🦴','🦵','🦶','🦷','🦸','🦹','🦺','🦻','🦼','🦽','🦾','🦿','🧀','🧊','🧠','🧟','🧛','🧞','🧜','🧚','🧙','🧝','🧞','🧟','🧠'];
+function random(min, max) { return Math.random() * (max - min) + min; }
+for(let i=0;i<16;i++){
+  const e = document.createElement('div');
+  e.className = 'cursed-emoji';
+  e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  e.style.left = random(0, 90) + 'vw';
+  e.style.top = random(0, 90) + 'vh';
+  e.style.animationDuration = random(1, 3) + 's';
+  overlay.appendChild(e);
+}
+// Flicker effect
+setInterval(()=>{
+  overlay.style.opacity = Math.random() * 0.7 + 0.2;
+}, 120);
 </script>
 </body>
 </html>

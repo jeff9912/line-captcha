@@ -62,7 +62,7 @@ info.style.fontSize = '18px';
 info.style.color = '#222';
 info.style.textAlign = 'center';
 info.style.width = '100%';
-info.innerHTML = "<b style='font-size:22px;color:#0077ff;'>Line Captcha</b><br><span style='font-size:16px;'>Draw along the grey path as closely as possible!<br>At the end, you'll be told if you seem human or AI.</span>";
+info.innerHTML = ""; // Remove title and instructions
 modal.insertBefore(info, canvas);
 
 // --- Result Box ---
@@ -81,7 +81,7 @@ modal.appendChild(resultBox);
 
 // --- Reset Button ---
 const resetBtn = document.createElement('button');
-resetBtn.textContent = 'Reset Line';
+resetBtn.textContent = 'Different drawing';
 resetBtn.style.marginTop = '18px';
 resetBtn.style.display = 'inline-block';
 resetBtn.style.fontSize = '16px';
@@ -103,11 +103,75 @@ resetBtn.onmouseout = () => {
 modal.appendChild(resetBtn);
 
 resetBtn.addEventListener('click', () => {
-    pathPoints = generatePath();
+    // Pick a new prompt
+    let newPrompt;
+    do {
+        newPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+    } while (newPrompt === promptBox.textContent.replace('Draw ', '').replace('!', ''));
+    promptBox.textContent = `Draw ${newPrompt}!`;
     userPoints = [];
     drawPath();
     resultBox.style.display = 'none';
 });
+
+// --- Drawing Prompts ---
+const prompts = [
+    "a cat",
+    "a tree",
+    "a house",
+    "a car",
+    "a flower",
+    "a sun",
+    "a fish",
+    "a cup",
+    "a dog",
+    "a boat",
+    "a bird",
+    "a chair",
+    "a book",
+    "a key",
+    "a shoe",
+    "a clock",
+    "a banana",
+    "mike",
+    "a minion",
+    "tralalero tralala",
+    
+    
+];
+const chosenPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+
+// Add prompt to modal
+const promptBox = document.createElement('div');
+promptBox.style.fontSize = '20px';
+promptBox.style.fontWeight = 'bold';
+promptBox.style.marginBottom = '18px';
+promptBox.style.color = '#0077ff';
+promptBox.textContent = `Draw ${chosenPrompt}!`;
+modal.insertBefore(promptBox, info);
+
+// --- Submit Button ---
+const submitBtn = document.createElement('button');
+submitBtn.textContent = 'Submit Drawing';
+submitBtn.style.marginTop = '18px';
+submitBtn.style.display = 'inline-block';
+submitBtn.style.fontSize = '16px';
+submitBtn.style.padding = '8px 24px';
+submitBtn.style.cursor = 'pointer';
+submitBtn.style.borderRadius = '8px';
+submitBtn.style.border = 'none';
+submitBtn.style.background = 'linear-gradient(90deg,#22c55e 0%,#16a34a 100%)';
+submitBtn.style.color = '#fff';
+submitBtn.style.fontWeight = 'bold';
+submitBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.07)';
+submitBtn.style.transition = 'background 0.2s';
+submitBtn.onmouseover = () => {
+    submitBtn.style.background = 'linear-gradient(90deg,#15803d 0%,#22c55e 100%)';
+};
+submitBtn.onmouseout = () => {
+    submitBtn.style.background = 'linear-gradient(90deg,#22c55e 0%,#16a34a 100%)';
+};
+modal.appendChild(submitBtn);
 
 // --- Path Generation ---
 function generatePath() {
@@ -159,14 +223,7 @@ let pathPoints = generatePath();
 // --- Draw Path ---
 function drawPath() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#888';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
-    for (const pt of pathPoints) {
-        ctx.lineTo(pt.x, pt.y);
-    }
-    ctx.stroke();
+    // No pre-drawn line
 }
 
 // --- User Drawing ---
@@ -203,21 +260,12 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
     if (!drawing) return;
     drawing = false;
-    // Check if user finished near the end of the path
-    const lastUser = userPoints[userPoints.length - 1];
-    const lastPath = pathPoints[pathPoints.length - 1];
-    const dx = lastUser.x - lastPath.x;
-    const dy = lastUser.y - lastPath.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 40) { // Require user to finish within 40px of end
-        resultBox.textContent = "Please complete the line all the way to the end!";
+});
+
+submitBtn.addEventListener('click', () => {
+    if (userPoints.length < 10) {
+        resultBox.textContent = "Please draw something before submitting!";
         resultBox.style.display = 'block';
-        // Reset line on incomplete attempt
-        pathPoints = generatePath();
-        userPoints = [];
-        setTimeout(() => {
-            drawPath();
-        }, 100);
         return;
     }
     analyzeDrawing();
@@ -225,25 +273,7 @@ canvas.addEventListener('mouseup', () => {
 
 // --- Analysis ---
 function analyzeDrawing() {
-    // 1. Check how close user line is to the path
-    let totalDist = 0;
-    let count = 0;
-    for (let i = 0; i < userPoints.length; i += Math.floor(userPoints.length / pathPoints.length) || 1) {
-        const up = userPoints[i];
-        // Find nearest path point
-        let minDist = Infinity;
-        for (const pp of pathPoints) {
-            const dx = up.x - pp.x;
-            const dy = up.y - pp.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < minDist) minDist = dist;
-        }
-        totalDist += minDist;
-        count++;
-    }
-    const avgDist = totalDist / count;
-
-    // 2. Analyze jitter (human lines have more jitter)
+    // 1. Analyze jitter (human lines have more jitter)
     let jitter = 0;
     for (let i = 2; i < userPoints.length; i++) {
         const dx1 = userPoints[i].x - userPoints[i - 1].x;
@@ -256,25 +286,32 @@ function analyzeDrawing() {
     }
     jitter = jitter / (userPoints.length - 2);
 
-    // 3. Decision
+    // 2. Analyze average speed (optional, for more realism)
+    let totalDist = 0;
+    let totalTime = 0;
+    for (let i = 1; i < userPoints.length; i++) {
+        const dx = userPoints[i].x - userPoints[i - 1].x;
+        const dy = userPoints[i].y - userPoints[i - 1].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        totalDist += dist;
+        totalTime += Math.abs(userPoints[i].t - userPoints[i - 1].t);
+    }
+    const avgSpeed = totalDist / (totalTime / 1000 + 1e-6); // px per second
+
+    // 3. Decision (tune thresholds as needed)
     let result = '';
     let success = false;
-    if (avgDist < 20 && jitter > 0.1) {
+    if (jitter > 0.1 && avgSpeed < 2000 && avgSpeed > 50) {
         result = 'You seem human!';
         success = true;
-    } else if (avgDist < 20 && jitter <= 0.1) {
+    } else if (jitter <= 0.1) {
         result = 'You seem like an AI (too smooth)!';
+    } else if (avgSpeed >= 2000) {
+        result = 'Too fast! Please draw at a more natural speed.';
     } else {
-        result = 'Failed: Please try to follow the path more closely.';
-        // Reset line on failure
-        pathPoints = generatePath();
-        userPoints = [];
-        setTimeout(() => {
-            drawPath();
-        }, 100);
+        result = 'Failed: Please try to draw more naturally.';
     }
 
-    // Show result in resultBox
     setTimeout(() => {
         resultBox.textContent = result;
         resultBox.style.display = 'block';
